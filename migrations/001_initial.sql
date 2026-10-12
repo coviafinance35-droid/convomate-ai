@@ -1,0 +1,7 @@
+create table if not exists profiles (id uuid primary key, display_name text, created_at timestamptz default now(), updated_at timestamptz default now());
+create table if not exists conversation_sessions (id uuid primary key, user_id uuid null, title text not null, conversation_summary text not null, relationship_context text, communication_goal text, preferred_tone text, expires_at timestamptz, created_at timestamptz default now(), updated_at timestamptz default now());
+create table if not exists conversation_messages (id uuid primary key, session_id uuid not null references conversation_sessions(id) on delete cascade, role text not null check(role in ('user','assistant','system')), content text not null, message_type text not null, metadata jsonb default '{}'::jsonb, created_at timestamptz default now());
+create table if not exists generated_drafts (id uuid primary key, user_id uuid null, session_id uuid not null references conversation_sessions(id) on delete cascade, source_message_id uuid null, draft_type text not null, content text not null, tone text, created_at timestamptz default now(), updated_at timestamptz default now());
+create index if not exists conversation_messages_session_idx on conversation_messages(session_id, created_at desc);
+create index if not exists generated_drafts_session_idx on generated_drafts(session_id, created_at desc);
+-- Supabase/RLS deployment note: enable row level security on all user-owned tables and add policies binding auth.uid() to user_id; anonymous sessions must use a server-issued ownership token.
